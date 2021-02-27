@@ -2,35 +2,46 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <unistd.h> /*deklaracje standardowych funkcji uniksowych (fork(), write() itd.)*/
+#include <unistd.h>
 
 int main()
 {
-    int max = 5;
-    pid_t pid = 0;
+    int children_number = 4;
+    pid_t fork_pid;
     printf("Moj PID = %d\n", getpid());
 
-    while (pid == 0 && max > 0) {
-        max -= 1;
-        switch(pid = fork()){
-            case -1:
-                fprintf(stderr, "Blad w fork\n");
-                return EXIT_FAILURE;
-            case 0: /*proces potomny*/
-                printf("Jestem procesem potomnym. PID = %d\n \
-                    Wartosc przekazana przez fork() = %d\n", getpid(), pid);
-            default:
-                printf("Jestem procesem macierzystym. PID = %d\n \
-                    Wartosc przekazana przez fork() = %d\n", getpid(), pid);
-                break;
+    while (children_number > 0)
+    {
+        children_number -= 1;
+        fork_pid = fork();
+        if (fork_pid == -1)
+        {
+            fprintf(stderr, "Blad w fork\n");
+            return EXIT_FAILURE;
+        }
+        else if (fork_pid == 0)
+        {
+            printf("Jestem procesem potomnym. PID = %d fork() = %d\n",
+                   getpid(), fork_pid);
+        }
+        else
+        {
+            printf("Jestem procesem macierzystym. PID = %d fork() = %d\n",
+                   getpid(), fork_pid);
+            break;
         }
     }
 
-    if(wait(0) == -1)
+    if (children_number > 0 && wait(0) == -1)
     {
         fprintf(stderr, "Blad w wait\n");
         return EXIT_FAILURE;
-
     }
+
+    if (children_number == 0)
+    {
+        sleep(60);
+    }
+
     return EXIT_SUCCESS;
 }
